@@ -1,0 +1,19 @@
+TESTBED?=mytestbed-${TARGET}
+CONTIKI_PROJECT = deployment-test
+PROJECT_SOURCEFILES += deployment.c node-map.c
+
+PROJECTDIRS += ./$(TESTBED)
+
+CFLAGS += -DNRF_SHOW_RESETREASON
+
+CONTIKI_WITH_IPV4 = 0
+CONTIKI_WITH_IPV6 = 0
+CONTIKI_WITH_RIME = 1
+
+#DEFINES+=PROJECT_CONF_H=\"project-conf.h\"
+
+all: $(CONTIKI_PROJECT)
+
+
+UWB_CONTIKI=../..
+include $(UWB_CONTIKI)/Makefile.uwb

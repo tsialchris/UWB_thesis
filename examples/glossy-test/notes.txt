@@ -1,0 +1,134 @@
+└─$ grep -Ril "glossy" ./          
+./tools/stm32w/stm32w_flasher/stm32w_flasher.exe
+./tools/cooja/lib/swingx-all-1.6.4.jar
+
+
+------------------------------------------------------------------
+12-02-2024
+------------------------------------------------------------------
+had to run:
+source .profile
+after adding this to .profile for the $PATH
+
+#ADDED FOR CONTIKI COMPILING
+PATH=$PATH:~/gcc-arm-none-eabi-10.3-2021.10/bin/
+
+
+
+have to run everything from:
+/home/liberty/contiki-uwb/
+dunno, this was cloned using git and it matters for some reason...
+Why??
+
+
+Command used for initial testing:
+cd examples/ranging/
+make TARGET=evb1000 -j
+make TARGET=evb1000 rng.upload
+
+Something, something, writing to flash, ..., jolly good!
+
+
+To see log output from the device currently connected with the JTAG device:
+make TARGET=evb1000 login PORT=/dev/ttyACM0
+
+
+To do:
+Look for what to modify in Glossy...
+Heads up: need to search the Trento version of Contiki for this (contiki-uwb)
+------------------------------------------------------------------
+------------------------------------------------------------------
+USING GLOSSY (taken from Trento README.md -> examples -> glossy-test):
+
+If you want to use Glossy and/or Crystal, define the following in your application Makefile:
+```
+UWB_WITH_GLOSSY = 1
+```
+This will include Glossy and Crystal into the compilation process and exclude all other Contiki stacks.
+
+------------------------------------------------------------------
+------------------------------------------------------------------
+TO MAKE GLOSSY_TEST:
+
+1st: need to populate all values in the file "project-conf.h"
+Note: the node_initiator seems to only take integer values, even though the address is not an integer (?)
+Note: initially set the initiator_id to 1101 to see what the address is from the logs output (all 0's is not allowed) 
+
+Keep getting this error...
+[Node ID may not be 0]
+
+Tried other formats as well
+- {{0x0a, 0x2f}}
+- ""
+
+Correct format:
+0x0a2f
+
+------------------------------------------------------------------
+------------------------------------------------------------------
+make -j
+OR
+make TARGET=evb1000 -j
+
+make TARGET=evb1000 glossy_test.upload
+
+LOGS:
+make login PORT=/dev/ttyACM0
+
+
+------------------------------------------------------------------
+------------------------------------------------------------------
+NODE_ID manual setting:
+
+path:
+/home/liberty/contiki-uwb/examples/glossy-test/glossy_test.c
+
+line:
+378
+
+BTW:
+Need to keep setting the local node_id parameter manually inside the code "glossy_test.c", otherwise
+this error won't go away "Node ID cannot be 0" and the process exits...
+
+In line 378:
+node_id = 0x0a2f;
+node_id = 0x08c1;
+
+
+------------------------------------------------------------------
+------------------------------------------------------------------
+Next step: try to increase the time delay between transmissions, by changing
+a parameter in the glossy protocol
+
+path:
+/home/liberty/contiki-uwb/dev/dw1000/glossy/glossy.c
+
+line:
+549, 558, 562
+
+Hmmm, not correct, this is for "GLOSSY_TX_ONLY_VERSION", need to look for
+the standard version "GLOSSY_STANDARD_VERSION"
+
+line 721 looks like general use, so:
+
+line:
+721
+
+ts_tx_4ns = ts_rx_4ns + g_context.slot_duration - tx_antenna_delay_4ns;
+->counts in ns (nano-seconds, so 10.000.000 ns is 10 seconds)
+ts_tx_4ns = ts_rx_4ns + g_context.slot_duration - tx_antenna_delay_4ns + 10000000;
+
+
+Ok, output is "Not Synced"
+
+-> This time messes up the transmission slot timing, so it DOES delay packets
+
+-> Further testing showed that this has no effect (?)
+
+-> Need further investigation
+
+poch_diff rtimer 6554
+tref 2195805586
+
+
+

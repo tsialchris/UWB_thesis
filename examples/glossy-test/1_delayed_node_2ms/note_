@@ -1,0 +1,20 @@
+
+
+changed starttx in deca_device.c:
+go to [/home/liberty/contiki-uwb/dev/dw1000/decadriver/], deca_device.c
+
+
+
+
+int dwt_starttx(uint8 mode)
+{
+
+    //added the delay for the tests here:
+    //i<260 -> 2ms delay
+    //i<1300 -> 10ms delay
+    
+    int i;
+    for (i=0; i<260; i++){
+         clock_delay_usec(10);
+    }
+    //
